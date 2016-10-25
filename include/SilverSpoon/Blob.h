@@ -7,7 +7,7 @@ class Blob
 {
 public:
     Blob();
-    void detect(cv::Mat img);
+    void detect(cv::Mat &img);
 
 private:
     int iLowH, iHighH;

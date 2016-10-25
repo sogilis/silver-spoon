@@ -24,12 +24,30 @@ Blob::Blob()
     cvCreateTrackbar("HighV", "Control", &iHighV, 255);
 }
 //----------------------------------------------------------------------------//
-void Blob::detect(cv::Mat img)
+void Blob::detect(cv::Mat &img)
 {
     cv::Mat imgHSV, imgThresholded;
 
+    cv::Mat hue_per_sat = cv::Mat::zeros(256, 256, CV_8UC1);
+    cv::Mat sat_per_val = cv::Mat::zeros(256, 256, CV_8UC1);
+    cv::Mat val_per_hue = cv::Mat::zeros(256, 256, CV_8UC1);
+
     //Convert the captured frame from BGR to HSV
     cvtColor(img, imgHSV, cv::COLOR_BGR2HSV);
+
+    for (size_t i = 0; i < imgHSV.rows; i++)
+    {
+        for (size_t j = 0; j < imgHSV.cols; j++)
+        {
+            uint8_t hue = imgHSV.at<cv::Vec3b>(i,j)[0];
+            uint8_t sat = imgHSV.at<cv::Vec3b>(i,j)[1];
+            uint8_t val = imgHSV.at<cv::Vec3b>(i,j)[2];
+
+            hue_per_sat.at<uint8_t>(hue, sat) = std::max((uint8_t)(hue_per_sat.at<uint8_t>(hue, sat)+1), hue_per_sat.at<uint8_t>(hue, sat));
+            sat_per_val.at<uint8_t>(sat, val) = std::max((uint8_t)(sat_per_val.at<uint8_t>(sat, val)+1), sat_per_val.at<uint8_t>(sat, val));
+            val_per_hue.at<uint8_t>(val, hue) = std::max((uint8_t)(val_per_hue.at<uint8_t>(val, hue)+1), val_per_hue.at<uint8_t>(val, hue));
+        }
+    }
 
     //Threshold the image
     inRange(imgHSV, cv::Scalar(iLowH, iLowS, iLowV), cv::Scalar(iHighH, iHighS, iHighV), imgThresholded);
@@ -49,14 +67,19 @@ void Blob::detect(cv::Mat img)
     cv::Mat fill = cv::Mat::zeros(img.rows, img.cols, CV_8UC3);
 
     //draw contours
-    if(contours.size() > 0)
-    {
-        for(int i=0;i >= 0;i = hierarchy[i][0])
-        {
-            cv::drawContours(fill, contours, i, cv::Scalar(255,0,0), CV_FILLED, 8, hierarchy);
-            cv::drawContours(fill, contours, i, cv::Scalar(0,255,0), 1, 8, hierarchy);
-        }
-        img += fill;
-    }
+    // if(contours.size() > 0)
+    // {
+    //     for(int i=0;i >= 0;i = hierarchy[i][0])
+    //     {
+    //         cv::drawContours(fill, contours, i, cv::Scalar(255,0,0), CV_FILLED, 8, hierarchy);
+    //         cv::drawContours(fill, contours, i, cv::Scalar(0,255,0), 1, 8, hierarchy);
+    //     }
+    //     img += fill;
+    // }
+
+    // cvtColor(imgHSV, img, cv::COLOR_HSV2BGR);
+    imshow("hue per sat", hue_per_sat);
+    imshow("sat per val", sat_per_val);
+    imshow("val per hue", val_per_hue);
 }
 //----------------------------------------------------------------------------//
